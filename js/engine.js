@@ -25,8 +25,8 @@ var Engine = (function(global) {
         ctx = canvas.getContext('2d'),
         lastTime;
 
-    canvas.width = 505;
-    canvas.height = 606;
+    canvas.width = numCols * 101;
+    canvas.height = numRows * 101;
     doc.body.appendChild(canvas);
 
     /* This function serves as the kickoff point for the game loop itself
@@ -45,8 +45,15 @@ var Engine = (function(global) {
         /* Call our update/render functions, pass along the time delta to
          * our update function since it may be used for smooth animation.
          */
-        update(dt);
-        render();
+        if(game.state === 'menu') {
+            // Render the character select menu if in menu
+            render();
+            renderCharSelect();
+        } else {
+            // Else render the game
+            update(dt);
+            render();
+        }
 
         /* Set our lastTime variable which is used to determine the time delta
          * for the next time this function is called.
@@ -57,6 +64,7 @@ var Engine = (function(global) {
          * function again as soon as the browser is able to draw another frame.
          */
         win.requestAnimationFrame(main);
+
     };
 
     /* This function does some initial setup that should only occur once,
@@ -80,7 +88,65 @@ var Engine = (function(global) {
      */
     function update(dt) {
         updateEntities(dt);
-        // checkCollisions();
+        var collisions = checkCollisions();
+        if(collisions[0]) {
+            // Collision with enemy, reset game
+            reset()
+        } else if(collisions[1]) {
+            // Collision with collectible, collect it and update score
+            collisions[1].forEach(function(data) {
+                data[0].collected = data[0].collected || data[1];
+            });
+            //.collected = true;
+        };
+    }
+
+    /* This function runs through the list of enemies and determines if any of
+     * their hitboxes collide with
+     * @returns {Array} [collideEnemy, collideCollect]
+     */
+    function checkCollisions() {
+
+        var pBounds = game.player.bounds(),
+            enemies = game.level.enemies,
+            collectibles = game.level.collectibles,
+            enemyCollide = false,
+            collectCollide = [];
+
+
+        // Check all Enemies
+        enemies.forEach(function(enemy) {
+            var eBounds = enemy.bounds();
+
+            // Check for collision with player
+            if (collides(pBounds, eBounds)) {
+                // Set Enemy Collision
+                enemyCollide = true;
+            }
+
+            // Boulder enemies destroy collectibles,
+            // so check them for collisions as well
+            if(enemy instanceof Boulder) {
+                collectibles.forEach(function(collectible) {
+                    if(collides(eBounds, collectible.bounds())) {
+                        collectCollide.push([collectible, enemy]);
+                    }
+                });
+            }
+
+        });
+
+        // Check all Collectibles
+        // we already checked for collisions against the Boulders,
+        // so only check against the player
+        collectibles.forEach(function(collectible) {
+            if(collides(pBounds, collectible.bounds())) {
+                // Set Collectible Collision
+                collectCollide.push([collectible, game.player]);
+            }
+        });
+
+        return [enemyCollide, collectCollide];
     }
 
     /* This is called by the update function  and loops through all of the
@@ -91,10 +157,15 @@ var Engine = (function(global) {
      * render methods.
      */
     function updateEntities(dt) {
-        allEnemies.forEach(function(enemy) {
+        game.level.enemies.forEach(function(enemy) {
             enemy.update(dt);
         });
-        player.update();
+
+        game.player.update();
+
+        game.level.collectibles.forEach(function(collectible) {
+            collectible.update(dt);
+        });
     }
 
     /* This function initially draws the "game level", it will then call
@@ -104,6 +175,11 @@ var Engine = (function(global) {
      * they are just drawing the entire screen over and over.
      */
     function render() {
+        /* First, clear the canvas, this shouldn't be necessary, as nothing
+         * should be in the top/bottom 'buffer' zones, but just in case.
+         */
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
         /* This array holds the relative URL to the image used
          * for that particular row of the game level.
          */
@@ -115,10 +191,9 @@ var Engine = (function(global) {
                 'images/grass-block.png',   // Row 1 of 2 of grass
                 'images/grass-block.png'    // Row 2 of 2 of grass
             ],
-            numRows = 6,
-            numCols = 5,
+            numRows = window.numRows || 6,
+            numCols = window.numCols || 5,
             row, col;
-
         /* Loop through the number of rows and columns we've defined above
          * and, using the rowImages array, draw the correct image for that
          * portion of the "grid"
@@ -136,8 +211,24 @@ var Engine = (function(global) {
             }
         }
 
+        /* Render the Leaderboard
+         * Score, and Level
+         */
+        ctx.font = '36px verdana';
+        ctx.fillStyle = '#000000';
+        ctx.textBaseline = 'hanging';
+        ctx.fillText('Score: ' + game.score, 8, 8);
+        ctx.fillText('Level: ' + game.level.level, canvas.width / 2, 8)
 
+
+        /* Render entities
+         */
         renderEntities();
+
+
+        /* Render character select menu when starting a new game
+         */
+        if(game.state === 'menu') renderCharSelect();
     }
 
     /* This function is called by the render function and is called on each game
@@ -145,22 +236,89 @@ var Engine = (function(global) {
      * on your enemy and player entities within app.js
      */
     function renderEntities() {
-        /* Loop through all of the objects within the allEnemies array and call
-         * the render function you have defined.
+        /* Loop through all of the objects and call their render functions
+         * Call in order, so they stack properly
          */
-        allEnemies.forEach(function(enemy) {
+
+        game.level.collectibles.forEach(function(collectible) {
+            collectible.render();
+        })
+
+        game.level.enemies.forEach(function(enemy) {
             enemy.render();
         });
 
-        player.render();
+        game.player.render();
+
     }
+
+
+    /* Render the character select menu
+     */
+    function renderCharSelect() {
+
+        var quarterX = canvas.width / 4,
+            quarterY = canvas.height / 4;
+
+        // Draw outer box of char select menu
+        ctx.fillStyle = '#ffffff';
+        ctx.strokeStyle = '#222222';
+        ctx.lineWidth = 4;
+        ctx.fillRect(quarterX, quarterY, quarterX * 2, quarterY * 2);
+        ctx.strokeRect(quarterX, quarterY, quarterX * 2, quarterY * 2);
+
+        // Draw characters
+        var scaledWidth = quarterX * 2 / 5,
+            scaledHeight = scaledWidth / tileWidth * tileFullHeight;
+
+        charSelectImages.forEach(function(image, index) {
+            // Set the bounds
+            image.bounds = [quarterX + (scaledWidth * index),
+                            quarterY,
+                            scaledWidth,
+                            scaledHeight];
+
+            // Add highlight if is currently selected character
+            if(image.sprite === game.player.sprite) {
+                ctx.drawImage(Resources.get('images/selector.png'),
+                              image.bounds[0],
+                              image.bounds[1],
+                              image.bounds[2],
+                              image.bounds[3]);
+            }
+
+            // Draw character
+            ctx.drawImage(Resources.get(image.sprite),
+                          image.bounds[0],
+                          image.bounds[1],
+                          image.bounds[2],
+                          image.bounds[3]);
+        });
+
+
+        // Render Start Button
+        var text = '>START<',
+            halfTextWidth = ctx.measureText(text).width / 2;
+
+        //Set Start Button's bounds so we can check against click
+        startButtonBounds = [quarterX * 2 - halfTextWidth,
+                             quarterY * 2.5,
+                             halfTextWidth * 2,
+                             36];
+
+        //Draw Start Button
+        ctx.fillStyle = '#000000';
+        ctx.fillText(text, quarterX * 2 - halfTextWidth, quarterY * 2.5);
+    }
+
 
     /* This function does nothing but it could have been a good place to
      * handle game reset states - maybe a new game menu or a game over screen
      * those sorts of things. It's only called once by the init() method.
      */
     function reset() {
-        // noop
+
+        game = new Game();
     }
 
     /* Go ahead and load all of the images we know we're going to need to
@@ -172,7 +330,18 @@ var Engine = (function(global) {
         'images/water-block.png',
         'images/grass-block.png',
         'images/enemy-bug.png',
-        'images/char-boy.png'
+        'images/char-boy.png',
+        'images/char-cat-girl.png',
+        'images/char-horn-girl.png',
+        'images/char-pink-girl.png',
+        'images/char-princess-girl.png',
+        'images/rock.png',
+        'images/star.png',
+        'images/heart.png',
+        'images/gem blue.png',
+        'images/gem green.png',
+        'images/gem orange.png',
+        'images/selector.png'
     ]);
     Resources.onReady(init);
 
