@@ -4,18 +4,22 @@ var TO_RADIANS = Math.PI / 180,
     tileWidth = 101,
     tileFullHeight = 171,
     vertOffset = 54 / 2,
-    numRows = 6;
-    numCols = Math.max(Math.floor(window.innerWidth / tileWidth) - 2, 5);
-    windowScale = numCols / 5;
-    collTypes = [{type: 'star', sprite: 'images/star.png', value: 25},
-                 {type: 'gem', sprite: 'images/gem blue.png', value: 5},
-                 {type: 'gem', sprite: 'images/gem green.png', value: 5},
-                 {type: 'gem', sprite: 'images/gem orange.png', value: 5}];
-    charSelectImages = [{sprite:'images/char-boy.png',bounds:[]},
-                        {sprite:'images/char-cat-girl.png',bounds:[]},
-                        {sprite:'images/char-horn-girl.png',bounds:[]},
-                        {sprite:'images/char-pink-girl.png',bounds:[]},
-                        {sprite:'images/char-princess-girl.png',bounds:[]}];
+    numRows = 6,
+    numCols = Math.max(Math.floor(window.innerWidth / tileWidth) - 2, 5),
+    windowScale = numCols / 5,
+    collTypes = [
+        {type: 'star', sprite: 'images/star.png', value: 25},
+        {type: 'gem', sprite: 'images/gem blue.png', value: 5},
+        {type: 'gem', sprite: 'images/gem green.png', value: 5},
+        {type: 'gem', sprite: 'images/gem orange.png', value: 5}
+    ],
+    charSelectImages = [
+        {sprite:'images/char-boy.png',bounds:[]},
+        {sprite:'images/char-cat-girl.png',bounds:[]},
+        {sprite:'images/char-horn-girl.png',bounds:[]},
+        {sprite:'images/char-pink-girl.png',bounds:[]},
+        {sprite:'images/char-princess-girl.png',bounds:[]}
+    ],
     startButtonBounds = [];
 
 
@@ -29,10 +33,12 @@ var Entity = function() {
  * @return {Array} [x, y, width, height]
  */
 Entity.prototype.bounds = function() {
-    return [this.x + tileWidth / 4,
-            this.y + tileHeight + vertOffset * 1.5,
-            tileWidth / 2,
-            vertOffset];
+    return [
+        this.x + tileWidth / 4,
+        this.y + tileHeight + vertOffset * 1.5,
+        tileWidth / 2,
+        vertOffset
+    ];
 }
 
 /* Draw the Entity to the Canvas
@@ -76,7 +82,7 @@ Enemy.prototype.initLoc = function() {
     this.y = this.row * tileHeight - vertOffset;
 
     // Set X to random value if this is the first time through,
-    // otherwise we're 'wrapping' the enemy so set it to -tileWidth
+    // otherwise we're 'wrapping' the enemy so set it to negative tileWidth
     this.x = this.x ? -tileWidth : this.x = Math.floor(Math.random() * numCols - 1) * tileWidth;
 }
 
@@ -204,6 +210,8 @@ Player.prototype.update = function() {
  * @params {String} key - name of keypress captured
  */
 Player.prototype.handleInput = function(key) {
+
+    // Don't do anything if we're in the menu/other
     if(game.state === 'play') {
         //Only update the row/column if it is in bounds
         if(key == 'up') {
@@ -258,6 +266,7 @@ Collectible.prototype.update = function() {
         game.score += this.value;
         game.level.collectibles.splice(game.level.collectibles.indexOf(this), 1);
     } else if(this.collected instanceof Boulder) {
+        // Remove if collided with a Boulder
         game.level.collectibles.splice(game.level.collectibles.indexOf(this), 1);
     } else {
         // Update x, y locations, height, width, and animation
@@ -265,7 +274,7 @@ Collectible.prototype.update = function() {
         this.y = this.row * tileHeight - vertOffset;
         this.width = tileWidth * this.scale;
         this.height = tileFullHeight * this.scale;
-        this.animationFrame = this.animationFrame + 1;
+        this.animationFrame++;
     }
 }
 
@@ -275,11 +284,13 @@ Collectible.prototype.update = function() {
 Collectible.prototype.render = function() {
 
     // Draw Collectible, full with bobbing
-    ctx.drawImage(  Resources.get(this.sprite),
-                    this.x + this.width / 2,
-                    this.y + this.height / 2 + Math.sin(this.animationFrame / 10) * 3,
-                    this.width,
-                    this.height);
+    ctx.drawImage(
+        Resources.get(this.sprite),
+        this.x + this.width / 2,
+        this.y + this.height / 2 + Math.sin(this.animationFrame / 10) * 3,
+        this.width,
+        this.height
+    );
 
     // Hitbox
     // ctx.fillStyle = this.hitboxColor;
@@ -315,7 +326,7 @@ var Level = function(level) {
     this.level = level;
     this.enemies = this.spawnEnemies();
     this.collectibles = this.spawnCollectibles();
-    //Maybe sometime later, different levels can have different win states
+    //Maybe sometime later, different levels can have different winning rows
     this.winningRows = {0: true};
 }
 
@@ -416,10 +427,12 @@ window.addEventListener('load', function(e) {
 * @returns {Boolean} true if collide, else false
 */
 function collides(boundsOne, boundsTwo) {
-    return !(boundsOne[0] > boundsTwo[0] + boundsTwo[2] ||
-             boundsOne[0] + boundsOne[2] < boundsTwo[0] ||
-             boundsOne[1] > boundsTwo[1] + boundsTwo[3] ||
-             boundsOne[1] + boundsOne[3] < boundsTwo[1]);
+    return !(
+        boundsOne[0] > boundsTwo[0] + boundsTwo[2] ||
+        boundsOne[0] + boundsOne[2] < boundsTwo[0] ||
+        boundsOne[1] > boundsTwo[1] + boundsTwo[3] ||
+        boundsOne[1] + boundsOne[3] < boundsTwo[1]
+    );
 }
 
 // Create a new game

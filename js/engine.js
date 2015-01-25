@@ -97,7 +97,6 @@ var Engine = (function(global) {
             collisions[1].forEach(function(data) {
                 data[0].collected = data[0].collected || data[1];
             });
-            //.collected = true;
         };
     }
 
@@ -193,7 +192,8 @@ var Engine = (function(global) {
             ],
             numRows = window.numRows || 6,
             numCols = window.numCols || 5,
-            row, col;
+            row,
+            col;
         /* Loop through the number of rows and columns we've defined above
          * and, using the rowImages array, draw the correct image for that
          * portion of the "grid"
@@ -211,14 +211,13 @@ var Engine = (function(global) {
             }
         }
 
-        /* Render the Leaderboard
-         * Score, and Level
+        /* Render the Leaderboard (Score and Level)
          */
         ctx.font = '36px verdana';
         ctx.fillStyle = '#000000';
         ctx.textBaseline = 'hanging';
         ctx.fillText('Score: ' + game.score, 8, 8);
-        ctx.fillText('Level: ' + game.level.level, canvas.width / 2, 8)
+        ctx.fillText('Level: ' + game.level.level, canvas.width / 2, 8);
 
 
         /* Render entities
@@ -273,26 +272,32 @@ var Engine = (function(global) {
 
         charSelectImages.forEach(function(image, index) {
             // Set the bounds
-            image.bounds = [quarterX + (scaledWidth * index),
-                            quarterY,
-                            scaledWidth,
-                            scaledHeight];
+            image.bounds = [
+                quarterX + (scaledWidth * index),
+                quarterY,
+                scaledWidth,
+                scaledHeight
+            ];
 
             // Add highlight if is currently selected character
             if(image.sprite === game.player.sprite) {
-                ctx.drawImage(Resources.get('images/selector.png'),
-                              image.bounds[0],
-                              image.bounds[1],
-                              image.bounds[2],
-                              image.bounds[3]);
+                ctx.drawImage(
+                    Resources.get('images/selector.png'),
+                    image.bounds[0],
+                    image.bounds[1],
+                    image.bounds[2],
+                    image.bounds[3]
+                );
             }
 
             // Draw character
-            ctx.drawImage(Resources.get(image.sprite),
-                          image.bounds[0],
-                          image.bounds[1],
-                          image.bounds[2],
-                          image.bounds[3]);
+            ctx.drawImage(
+                Resources.get(image.sprite),
+                image.bounds[0],
+                image.bounds[1],
+                image.bounds[2],
+                image.bounds[3]
+            );
         });
 
 
@@ -301,10 +306,12 @@ var Engine = (function(global) {
             halfTextWidth = ctx.measureText(text).width / 2;
 
         //Set Start Button's bounds so we can check against click
-        startButtonBounds = [quarterX * 2 - halfTextWidth,
-                             quarterY * 2.5,
-                             halfTextWidth * 2,
-                             36];
+        startButtonBounds = [
+            quarterX * 2 - halfTextWidth,
+            quarterY * 2.5,
+            halfTextWidth * 2,
+            36
+        ];
 
         //Draw Start Button
         ctx.fillStyle = '#000000';
