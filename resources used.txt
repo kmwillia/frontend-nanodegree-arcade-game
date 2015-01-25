@@ -1,0 +1,6 @@
+MDN for Canvas
+https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D
+
+Blog for Rotating
+http://creativejs.com/2012/01/day-10-drawing-rotated-images-into-canvas/
+

@@ -1,6 +1,16 @@
-frontend-nanodegree-arcade-game
+### frontend-nanodegree-arcade-game
 ===============================
 
-Students should use this rubric: https://www.udacity.com/course/viewer#!/c-ud015/l-3072058665/m-3072588797
+####To run:
 
-for self-checking their submission.
+Open index.html in modern browser of choice
+
+####To play:
+
+- Select a character to use
+- Click start
+- Use `up` `down` `left` and `right` to move around the screen
+- Dodge enemy ladybugs and boulders
+- Collect Gems and Stars to get points
+- Make it to the water to go to the next level
+- Boulders will also destroy gems and stars, so act fast!
